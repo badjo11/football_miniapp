@@ -536,6 +536,12 @@ window.addEventListener('unhandledrejection', function(e) {
     '<div class="empty-state"><p>Promise error:<br>' + e.reason + '</p></div>';
 });
 
+window.onerror = function(msg, url, line) {
+  document.body.innerHTML = '<pre style="color:red;padding:20px">' + msg + '\nLine: ' + line + '</pre>';
+};
+window.addEventListener('unhandledrejection', function(e) {
+  document.body.innerHTML = '<pre style="color:red;padding:20px">Promise: ' + e.reason + '</pre>';
+});
 loadHome();
 </script>
 </body>
