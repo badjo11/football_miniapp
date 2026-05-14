@@ -28,6 +28,8 @@
     padding-bottom: 72px;
     -webkit-font-smoothing: antialiased;
   }
+
+  /* ─── Nav ──────────────────────────── */
   .nav {
     position: fixed; bottom: 0; left: 0; right: 0;
     background: var(--secondary-bg);
@@ -44,9 +46,13 @@
   }
   .nav-item.active { color: var(--link); }
   .nav-item svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ─── Screens ──────────────────────── */
   .screen { display: none; padding: 16px; animation: fadeIn 0.2s ease; }
   .screen.active { display: block; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; } }
+
+  /* ─── Cards ────────────────────────── */
   .card {
     background: var(--section-bg);
     border-radius: 14px;
@@ -66,6 +72,8 @@
   .badge-a { background: rgba(76,196,116,0.15); color: var(--accent); }
   .badge-b { background: rgba(106,179,243,0.15); color: var(--link); }
   .badge-c { background: rgba(255,255,255,0.08); color: var(--hint); }
+
+  /* ─── Player List ──────────────────── */
   .player-row {
     display: flex; align-items: center; gap: 12px;
     padding: 10px 0;
@@ -81,6 +89,8 @@
   .player-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .player-username { font-size: 12px; color: var(--hint); }
   .player-rating { font-size: 15px; font-weight: 600; text-align: right; min-width: 32px; }
+
+  /* ─── Buttons ──────────────────────── */
   .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 6px;
     padding: 12px 20px; border-radius: 12px;
@@ -95,6 +105,8 @@
   .btn:disabled { opacity: 0.4; pointer-events: none; }
   .btn-row { display: flex; gap: 8px; margin-top: 12px; }
   .btn-row .btn { flex: 1; }
+
+  /* ─── Game Banner ──────────────────── */
   .game-banner {
     background: linear-gradient(135deg, rgba(58,149,213,0.2), rgba(76,196,116,0.12));
     border-radius: 16px; padding: 20px; margin-bottom: 12px;
@@ -112,6 +124,8 @@
     background: var(--accent);
   }
   .count-label { font-size: 13px; color: var(--hint); text-align: right; }
+
+  /* ─── Teams ────────────────────────── */
   .team-card {
     background: var(--section-bg);
     border-radius: 14px; padding: 16px; margin-bottom: 12px;
@@ -122,16 +136,22 @@
   .team-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
   .team-name { font-size: 16px; font-weight: 600; }
   .team-rating { font-size: 13px; color: var(--hint); }
+
+  /* ─── Section Titles ───────────────── */
   .section-title {
     font-size: 13px; font-weight: 600; color: var(--hint);
     text-transform: uppercase; letter-spacing: 0.5px;
     margin: 20px 0 10px; padding-left: 4px;
   }
+
+  /* ─── Empty State ──────────────────── */
   .empty-state {
     text-align: center; padding: 60px 20px; color: var(--hint);
   }
   .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
   .empty-state p { font-size: 14px; line-height: 1.5; }
+
+  /* ─── Admin Forms ──────────────────── */
   .form-group { margin-bottom: 14px; }
   .form-label { font-size: 13px; color: var(--hint); margin-bottom: 6px; display: block; }
   .form-input {
@@ -143,6 +163,9 @@
     transition: border-color 0.15s;
   }
   .form-input:focus { border-color: var(--link); }
+  select.form-input { -webkit-appearance: none; }
+
+  /* ─── Rating Stars ─────────────────── */
   .rating-edit {
     display: flex; align-items: center; gap: 8px;
   }
@@ -153,6 +176,8 @@
     font-size: 16px; font-weight: 600;
     min-width: 36px; text-align: center;
   }
+
+  /* ─── Partner Select ───────────────── */
   .partner-btn {
     background: none; border: 1px solid rgba(255,255,255,0.08);
     border-radius: 10px; padding: 8px 12px; color: var(--text);
@@ -161,6 +186,9 @@
     transition: background 0.15s;
   }
   .partner-btn:hover { background: rgba(255,255,255,0.04); }
+  .partner-btn.selected { border-color: var(--accent); background: rgba(76,196,116,0.08); }
+
+  /* ─── Toast ────────────────────────── */
   .toast {
     position: fixed; top: 16px; left: 16px; right: 16px;
     background: var(--section-bg); border-radius: 12px;
@@ -170,6 +198,8 @@
     border: 1px solid rgba(255,255,255,0.06);
   }
   .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* ─── Loading ──────────────────────── */
   .loading { text-align: center; padding: 40px; color: var(--hint); }
   .spinner {
     width: 28px; height: 28px; border: 2px solid rgba(255,255,255,0.1);
@@ -183,28 +213,34 @@
 
 <div id="toast" class="toast"></div>
 
+<!-- ═══ HOME ══════════════════════════════════ -->
 <div id="screen-home" class="screen active">
   <div id="home-content"><div class="loading"><div class="spinner"></div>Загрузка...</div></div>
 </div>
 
+<!-- ═══ ROSTER ════════════════════════════════ -->
 <div id="screen-roster" class="screen">
   <div id="roster-content"><div class="loading"><div class="spinner"></div></div></div>
 </div>
 
+<!-- ═══ TEAMS ═════════════════════════════════ -->
 <div id="screen-teams" class="screen">
   <div id="teams-content"><div class="loading"><div class="spinner"></div></div></div>
 </div>
 
+<!-- ═══ PLAYERS ═══════════════════════════════ -->
 <div id="screen-players" class="screen">
   <div class="section-title">Все игроки</div>
   <div id="players-content"><div class="loading"><div class="spinner"></div></div></div>
 </div>
 
+<!-- ═══ ADMIN ═════════════════════════════════ -->
 <div id="screen-admin" class="screen">
   <div class="section-title">Администрирование</div>
   <div id="admin-content"></div>
 </div>
 
+<!-- ═══ NAV ═══════════════════════════════════ -->
 <nav class="nav">
   <button class="nav-item active" onclick="showScreen('home')">
     <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -229,72 +265,63 @@
 </nav>
 
 <script>
-var tg = window.Telegram ? window.Telegram.WebApp : null;
-var initData = tg ? tg.initData : "";
+const tg = window.Telegram?.WebApp;
+const initData = tg?.initData || "";
 
+// Telegram WebApp: расширяемся на весь экран
 if (tg) {
   tg.ready();
   tg.expand();
+  tg.setHeaderColor("secondary_bg_color");
 }
 
-var urlParams = new URLSearchParams(window.location.search);
-var urlUser = null;
-if (urlParams.get("uid")) {
-  urlUser = {
-    uid: urlParams.get("uid"),
-    un: urlParams.get("un") || "",
-    fn: urlParams.get("fn") || "",
-    ln: urlParams.get("ln") || "",
-    ts: urlParams.get("ts") || "",
-    sig: urlParams.get("sig") || ""
-  };
-}
-
-var state = {
+let state = {
   player: null,
   game: null,
-  isAdmin: false
+  isAdmin: false,
 };
 
-function api(path, method, body) {
-  method = method || "GET";
-  var headers = {
-    "Content-Type": "application/json",
-    "X-Telegram-Init-Data": initData || ""
+// ─── API ─────────────────────────────────────────
+
+async function api(path, method = "GET", body = null) {
+  const opts = {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      "X-Telegram-Init-Data": initData,
+    },
   };
-  if (urlUser) {
-    headers["X-Telegram-User"] = JSON.stringify(urlUser);
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(`/api${path}`, opts);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `Error ${res.status}`);
   }
-  var opts = { method: method, headers: headers };
-  if (body) { opts.body = JSON.stringify(body); }
-  return fetch("/api" + path, opts).then(function(res) {
-    if (!res.ok) {
-      return res.json().catch(function() { return {}; }).then(function(err) {
-        throw new Error(err.detail || "Error " + res.status);
-      });
-    }
-    return res.json();
-  });
+  return res.json();
 }
 
+// ─── Navigation ──────────────────────────────────
+
 function showScreen(name) {
-  var screens = document.querySelectorAll(".screen");
-  for (var i = 0; i < screens.length; i++) screens[i].classList.remove("active");
-  var navItems = document.querySelectorAll(".nav-item");
-  for (var i = 0; i < navItems.length; i++) navItems[i].classList.remove("active");
-  document.getElementById("screen-" + name).classList.add("active");
-  var idx = {home:0, roster:1, teams:2, players:3, admin:4}[name];
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+  document.getElementById(`screen-${name}`).classList.add("active");
+  const navItems = document.querySelectorAll(".nav-item");
+  const idx = { home:0, roster:1, teams:2, players:3, admin:4 }[name];
   if (navItems[idx]) navItems[idx].classList.add("active");
-  var loaders = {home: loadHome, roster: loadRoster, teams: loadTeams, players: loadPlayers, admin: loadAdmin};
+
+  const loaders = { home: loadHome, roster: loadRoster, teams: loadTeams, players: loadPlayers, admin: loadAdmin };
   if (loaders[name]) loaders[name]();
 }
 
 function toast(msg) {
-  var el = document.getElementById("toast");
+  const el = document.getElementById("toast");
   el.textContent = msg;
   el.classList.add("show");
-  setTimeout(function() { el.classList.remove("show"); }, 2500);
+  setTimeout(() => el.classList.remove("show"), 2500);
 }
+
+// ─── Helpers ─────────────────────────────────────
 
 function ratingClass(r) {
   if (r >= 9) return "s";
@@ -304,244 +331,371 @@ function ratingClass(r) {
 }
 
 function ratingLabel(r) {
-  return {s:"S", a:"A", b:"B", c:"C"}[ratingClass(r)];
+  const cls = ratingClass(r);
+  return { s: "S", a: "A", b: "B", c: "C" }[cls];
 }
 
 function avatarColor(name) {
-  var colors = ["#e06c75","#d19a66","#e5c07b","#98c379","#56b6c2","#61afef","#c678dd"];
-  var h = 0;
-  for (var i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
+  const colors = [
+    "#e06c75","#d19a66","#e5c07b","#98c379","#56b6c2","#61afef","#c678dd",
+  ];
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
   return colors[Math.abs(h) % colors.length];
 }
 
 function initials(p) {
-  var f = p.first_name || "";
-  var l = p.last_name || "";
+  const f = p.first_name || "";
+  const l = p.last_name || "";
   return (f[0] || "") + (l[0] || "") || "?";
 }
 
 function playerName(p) {
-  var parts = [p.first_name, p.last_name].filter(Boolean);
-  return parts.join(" ") || p.username || "Игрок";
+  return [p.first_name, p.last_name].filter(Boolean).join(" ") || p.username || "Игрок";
 }
 
-function playerRow(p, extra) {
-  var name = playerName(p);
-  var cls = ratingClass(p.rating);
-  var color = avatarColor(name);
-  return '<div class="player-row">' +
-    '<div class="player-avatar" style="background:' + color + '22;color:' + color + '">' + initials(p) + '</div>' +
-    '<div class="player-info">' +
-      '<div class="player-name">' + name + '</div>' +
-      '<div class="player-username">' + (p.username ? "@" + p.username : "") + '</div>' +
-    '</div>' +
-    '<span class="badge badge-' + cls + '">' + ratingLabel(p.rating) + '</span>' +
-    '<div class="player-rating">' + p.rating.toFixed(1) + '</div>' +
-    (extra || "") +
-  '</div>';
+function playerRow(p, extra = "") {
+  const name = playerName(p);
+  const cls = ratingClass(p.rating);
+  const color = avatarColor(name);
+  return `
+    <div class="player-row">
+      <div class="player-avatar" style="background:${color}22;color:${color}">${initials(p)}</div>
+      <div class="player-info">
+        <div class="player-name">${name}</div>
+        <div class="player-username">${p.username ? "@" + p.username : ""}</div>
+      </div>
+      <span class="badge badge-${cls}">${ratingLabel(p.rating)}</span>
+      <div class="player-rating">${p.rating.toFixed(1)}</div>
+      ${extra}
+    </div>
+  `;
 }
 
-function loadHome() {
-  var el = document.getElementById("home-content");
-  api("/me").then(function(data) {
+// ─── HOME ────────────────────────────────────────
+
+async function loadHome() {
+  const el = document.getElementById("home-content");
+  try {
+    const data = await api("/me");
     state.player = data.player;
     state.isAdmin = data.player.is_admin;
+
     if (state.isAdmin) {
       document.getElementById("nav-admin").style.display = "";
     }
-    var game = data.active_game;
+
+    const game = data.active_game;
     if (!game) {
-      el.innerHTML = '<div class="empty-state"><div class="icon">⚽</div><p>Нет активной игры.<br>Ждите объявления от администратора.</p></div>';
+      el.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">⚽</div>
+          <p>Нет активной игры.<br>Ждите объявления от администратора.</p>
+        </div>
+      `;
       return;
     }
-    return api("/game").then(function(gameData) {
-      state.game = gameData.game;
-      var pct = Math.round((gameData.count / game.max_players) * 100);
-      var isReg = gameData.is_registered;
-      var regBtn = isReg
-        ? '<button class="btn btn-danger" onclick="doUnregister()">Отписаться</button>'
-        : '<button class="btn btn-primary" onclick="doRegister()"' + (gameData.count >= game.max_players ? ' disabled' : '') + '>' +
-          (gameData.count >= game.max_players ? 'Мест нет' : 'Записаться') + '</button>';
-      el.innerHTML =
-        '<div class="game-banner">' +
-          '<h2>⚽ ' + game.date + '</h2>' +
-          '<div class="game-meta"><span>🕐 ' + game.time + '</span><span>📍 ' + game.location + '</span></div>' +
-          '<div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
-          '<div class="count-label">' + gameData.count + ' / ' + game.max_players + ' игроков</div>' +
-          '<div class="btn-row">' + regBtn + '</div>' +
-        '</div>' +
-        '<div class="card">' +
-          '<div class="card-header"><div class="card-title">Мой профиль</div>' +
-          '<span class="badge badge-' + ratingClass(state.player.rating) + '">' + ratingLabel(state.player.rating) + '-класс</span></div>' +
-          playerRow(state.player) +
-          '<div class="section-title" style="margin-top:16px">Партнёр по команде</div>' +
-          '<div id="partner-section"></div>' +
-        '</div>';
-      loadPartnerSection(gameData.players);
-    });
-  }).catch(function(e) {
-    el.innerHTML = '<div class="empty-state"><p>Ошибка загрузки: ' + e.message + '</p></div>';
-  });
+
+    const gameData = await api("/game");
+    state.game = gameData.game;
+    const pct = Math.round((gameData.count / game.max_players) * 100);
+    const isReg = gameData.is_registered;
+
+    el.innerHTML = `
+      <div class="game-banner">
+        <h2>⚽ ${game.date}</h2>
+        <div class="game-meta">
+          <span>🕐 ${game.time}</span>
+          <span>📍 ${game.location}</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <div class="count-label">${gameData.count} / ${game.max_players} игроков</div>
+        <div class="btn-row">
+          ${isReg
+            ? `<button class="btn btn-danger" onclick="doUnregister()">Отписаться</button>`
+            : `<button class="btn btn-primary" onclick="doRegister()" ${gameData.count >= game.max_players ? "disabled" : ""}>
+                ${gameData.count >= game.max_players ? "Мест нет" : "Записаться"}
+              </button>`
+          }
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Мой профиль</div>
+          <span class="badge badge-${ratingClass(state.player.rating)}">${ratingLabel(state.player.rating)}-класс</span>
+        </div>
+        ${playerRow(state.player)}
+        <div class="section-title" style="margin-top:16px">Партнёр по команде</div>
+        <div id="partner-section"></div>
+      </div>
+    `;
+
+    loadPartnerSection(gameData.players);
+  } catch (e) {
+    el.innerHTML = `<div class="empty-state"><p>Ошибка загрузки: ${e.message}</p></div>`;
+  }
 }
 
 function loadPartnerSection(players) {
-  var el = document.getElementById("partner-section");
+  const el = document.getElementById("partner-section");
   if (!el) return;
-  var me = state.player;
-  var others = players.filter(function(p) { return p.id !== me.id; });
-  api("/me").then(function(data) {
-    var pref = data.preference;
-    var html = "";
+
+  const me = state.player;
+  const others = players.filter(p => p.id !== me.id);
+
+  api("/me").then(data => {
+    const pref = data.preference;
+    let html = "";
     if (pref) {
-      var c = avatarColor(playerName(pref));
-      html = '<div class="player-row">' +
-        '<div class="player-avatar" style="background:' + c + '22;color:' + c + '">' + initials(pref) + '</div>' +
-        '<div class="player-info"><div class="player-name">' + playerName(pref) + '</div>' +
-        '<div class="player-username" style="color:var(--accent)">✓ Выбран партнёром</div></div>' +
-        '<button class="btn btn-danger" style="width:auto;padding:6px 12px;font-size:12px" onclick="doClearPartner()">✕</button></div>';
+      html += `
+        <div class="player-row">
+          <div class="player-avatar" style="background:${avatarColor(playerName(pref))}22;color:${avatarColor(playerName(pref))}">${initials(pref)}</div>
+          <div class="player-info">
+            <div class="player-name">${playerName(pref)}</div>
+            <div class="player-username" style="color:var(--accent)">✓ Выбран партнёром</div>
+          </div>
+          <button class="btn btn-danger" style="width:auto;padding:6px 12px;font-size:12px" onclick="doClearPartner()">✕</button>
+        </div>
+      `;
     } else if (others.length > 0) {
-      html = '<div style="font-size:13px;color:var(--hint);margin-bottom:8px">Выбери, с кем хочешь быть в одной команде:</div>';
-      others.forEach(function(p) {
-        var c = avatarColor(playerName(p));
-        html += '<button class="partner-btn" onclick="doSetPartner(' + p.id + ')">' +
-          '<div class="player-avatar" style="width:28px;height:28px;font-size:11px;background:' + c + '22;color:' + c + '">' + initials(p) + '</div>' +
-          '<span>' + playerName(p) + ' (' + p.rating.toFixed(1) + ')</span></button><div style="height:6px"></div>';
+      html += `<div style="font-size:13px;color:var(--hint);margin-bottom:8px">Выбери, с кем хочешь быть в одной команде:</div>`;
+      others.forEach(p => {
+        html += `
+          <button class="partner-btn" onclick="doSetPartner(${p.id})">
+            <div class="player-avatar" style="width:28px;height:28px;font-size:11px;background:${avatarColor(playerName(p))}22;color:${avatarColor(playerName(p))}">${initials(p)}</div>
+            <span>${playerName(p)} (${p.rating.toFixed(1)})</span>
+          </button>
+          <div style="height:6px"></div>
+        `;
       });
     } else {
-      html = '<div style="font-size:13px;color:var(--hint)">Пока никто не записался.</div>';
+      html += `<div style="font-size:13px;color:var(--hint)">Пока никто не записался.</div>`;
     }
     el.innerHTML = html;
   });
 }
 
-function doRegister() {
-  api("/register", "POST").then(function() { toast("✅ Ты записан!"); loadHome(); }).catch(function(e) { toast("❌ " + e.message); });
-}
-function doUnregister() {
-  api("/unregister", "POST").then(function() { toast("👌 Ты отписался"); loadHome(); }).catch(function(e) { toast("❌ " + e.message); });
-}
-function doSetPartner(id) {
-  api("/preference", "POST", {partner_id: id}).then(function() { toast("✅ Партнёр выбран!"); loadHome(); }).catch(function(e) { toast("❌ " + e.message); });
-}
-function doClearPartner() {
-  api("/preference", "DELETE").then(function() { toast("Партнёр убран"); loadHome(); }).catch(function(e) { toast("❌ " + e.message); });
+async function doRegister() {
+  try {
+    await api("/register", "POST");
+    toast("✅ Ты записан!");
+    loadHome();
+  } catch (e) { toast("❌ " + e.message); }
 }
 
-function loadRoster() {
-  var el = document.getElementById("roster-content");
-  api("/game").then(function(data) {
-    if (!data.game) { el.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>Нет активной игры.</p></div>'; return; }
-    var groups = {s:[], a:[], b:[], c:[]};
-    data.players.forEach(function(p) { groups[ratingClass(p.rating)].push(p); });
-    var html = '<div class="card"><div class="card-header"><div class="card-title">' + data.game.date + ' · ' + data.game.time + '</div>' +
-      '<span style="font-size:14px;font-weight:600;color:var(--accent)">' + data.count + '/' + data.game.max_players + '</span></div>';
-    var labels = {s:"⭐ S-класс", a:"🟢 A-класс", b:"🔵 B-класс", c:"⚪ C-класс"};
-    ["s","a","b","c"].forEach(function(cls) {
+async function doUnregister() {
+  try {
+    await api("/unregister", "POST");
+    toast("👌 Ты отписался");
+    loadHome();
+  } catch (e) { toast("❌ " + e.message); }
+}
+
+async function doSetPartner(partnerId) {
+  try {
+    await api("/preference", "POST", { partner_id: partnerId });
+    toast("✅ Партнёр выбран!");
+    loadHome();
+  } catch (e) { toast("❌ " + e.message); }
+}
+
+async function doClearPartner() {
+  try {
+    await api("/preference", "DELETE");
+    toast("Партнёр убран");
+    loadHome();
+  } catch (e) { toast("❌ " + e.message); }
+}
+
+// ─── ROSTER ──────────────────────────────────────
+
+async function loadRoster() {
+  const el = document.getElementById("roster-content");
+  try {
+    const data = await api("/game");
+    if (!data.game) {
+      el.innerHTML = `<div class="empty-state"><div class="icon">📋</div><p>Нет активной игры.</p></div>`;
+      return;
+    }
+
+    const groups = { s: [], a: [], b: [], c: [] };
+    data.players.forEach(p => groups[ratingClass(p.rating)].push(p));
+
+    let html = `
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">${data.game.date} · ${data.game.time}</div>
+          <span style="font-size:14px;font-weight:600;color:var(--accent)">${data.count}/${data.game.max_players}</span>
+        </div>
+    `;
+
+    const labels = { s:"⭐ S-класс", a:"🟢 A-класс", b:"🔵 B-класс", c:"⚪ C-класс" };
+    for (const [cls, label] of Object.entries(labels)) {
       if (groups[cls].length > 0) {
-        html += '<div class="section-title">' + labels[cls] + ' (' + groups[cls].length + ')</div>';
-        groups[cls].forEach(function(p) { html += playerRow(p); });
+        html += `<div class="section-title">${label} (${groups[cls].length})</div>`;
+        groups[cls].forEach(p => html += playerRow(p));
       }
-    });
-    html += '</div>';
-    el.innerHTML = html;
-  }).catch(function(e) { el.innerHTML = '<div class="empty-state"><p>' + e.message + '</p></div>'; });
-}
-
-function loadTeams() {
-  var el = document.getElementById("teams-content");
-  api("/teams").then(function(data) {
-    if (!data.teams || Object.keys(data.teams).length === 0) {
-      el.innerHTML = '<div class="empty-state"><div class="icon">⚽</div><p>Составы ещё не сформированы.</p></div>'; return;
     }
-    var names = ["", "Команда 1", "Команда 2", "Команда 3", "Команда 4"];
-    var html = "";
-    Object.keys(data.teams).forEach(function(tn) {
-      var team = data.teams[tn];
-      html += '<div class="team-card"><div class="team-header">' +
-        '<div class="team-name">🏆 ' + (names[tn] || "Команда " + tn) + '</div>' +
-        '<div class="team-rating">Σ ' + team.total_rating + ' · ø ' + team.avg_rating + '</div></div>';
-      team.players.forEach(function(p) { html += playerRow(p); });
-      html += '</div>';
-    });
+
+    html += `</div>`;
     el.innerHTML = html;
-  }).catch(function(e) { el.innerHTML = '<div class="empty-state"><p>' + e.message + '</p></div>'; });
+  } catch (e) {
+    el.innerHTML = `<div class="empty-state"><p>${e.message}</p></div>`;
+  }
 }
 
-function loadPlayers() {
-  var el = document.getElementById("players-content");
-  api("/players").then(function(data) {
-    if (data.players.length === 0) { el.innerHTML = '<div class="empty-state"><p>Нет игроков.</p></div>'; return; }
-    var html = '<div class="card">';
-    data.players.forEach(function(p) { html += playerRow(p); });
-    html += '</div>';
+// ─── TEAMS ───────────────────────────────────────
+
+async function loadTeams() {
+  const el = document.getElementById("teams-content");
+  try {
+    const data = await api("/teams");
+    if (!data.teams || Object.keys(data.teams).length === 0) {
+      el.innerHTML = `<div class="empty-state"><div class="icon">⚽</div><p>Составы ещё не сформированы.</p></div>`;
+      return;
+    }
+
+    let html = "";
+    const teamNames = ["", "Команда 1", "Команда 2", "Команда 3", "Команда 4"];
+    for (const [tn, team] of Object.entries(data.teams)) {
+      html += `
+        <div class="team-card">
+          <div class="team-header">
+            <div class="team-name">🏆 ${teamNames[tn] || "Команда " + tn}</div>
+            <div class="team-rating">Σ ${team.total_rating} · ø ${team.avg_rating}</div>
+          </div>
+          ${team.players.map(p => playerRow(p)).join("")}
+        </div>
+      `;
+    }
     el.innerHTML = html;
-  }).catch(function(e) { el.innerHTML = '<div class="empty-state"><p>' + e.message + '</p></div>'; });
+  } catch (e) {
+    el.innerHTML = `<div class="empty-state"><p>${e.message}</p></div>`;
+  }
 }
 
-function loadAdmin() {
-  var el = document.getElementById("admin-content");
-  if (!state.isAdmin) { el.innerHTML = '<div class="empty-state"><p>Нет доступа.</p></div>'; return; }
-  api("/players").then(function(data) {
-    var players = data.players;
-    var ratingsHtml = "";
-    players.forEach(function(p) {
-      ratingsHtml += '<div class="player-row"><div class="player-info"><div class="player-name">' + playerName(p) + '</div></div>' +
-        '<div class="rating-edit"><input type="range" min="1" max="10" step="0.5" value="' + p.rating + '" ' +
-        'oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(1)" ' +
-        'onchange="doSetRating(' + p.id + ', this.value)">' +
-        '<span class="rating-value">' + p.rating.toFixed(1) + '</span></div></div>';
-    });
-    el.innerHTML =
-      '<div class="card"><div class="card-title">Создать игру</div><div style="height:12px"></div>' +
-        '<div class="form-group"><label class="form-label">Дата</label><input class="form-input" type="date" id="game-date"></div>' +
-        '<div class="form-group"><label class="form-label">Время</label><input class="form-input" type="time" id="game-time" value="19:00"></div>' +
-        '<div class="form-group"><label class="form-label">Место</label><input class="form-input" id="game-location" placeholder="Поле на Манаса"></div>' +
-        '<div class="form-group"><label class="form-label">Мест</label><input class="form-input" type="number" id="game-max" value="20" min="4" max="40"></div>' +
-        '<button class="btn btn-primary" onclick="doCreateGame()">Создать игру</button></div>' +
-      '<div class="card"><div class="card-title">Распределить составы</div><div style="height:12px"></div>' +
-        '<button class="btn btn-primary" onclick="doDistribute()">⚙️ Авто-распределение</button></div>' +
-      '<div class="card"><div class="card-title">Закрыть запись</div><div style="height:12px"></div>' +
-        '<button class="btn btn-danger" onclick="doCloseGame()">Закрыть текущую игру</button></div>' +
-      '<div class="card"><div class="card-title">Рейтинги игроков</div><div style="height:12px"></div><div id="admin-ratings">' + ratingsHtml + '</div></div>';
-  });
+// ─── PLAYERS ─────────────────────────────────────
+
+async function loadPlayers() {
+  const el = document.getElementById("players-content");
+  try {
+    const data = await api("/players");
+    if (data.players.length === 0) {
+      el.innerHTML = `<div class="empty-state"><p>Нет зарегистрированных игроков.</p></div>`;
+      return;
+    }
+    el.innerHTML = `<div class="card">${data.players.map(p => playerRow(p)).join("")}</div>`;
+  } catch (e) {
+    el.innerHTML = `<div class="empty-state"><p>${e.message}</p></div>`;
+  }
 }
 
-function doCreateGame() {
-  var date = document.getElementById("game-date").value;
-  var time = document.getElementById("game-time").value;
-  var location = document.getElementById("game-location").value;
-  var max = parseInt(document.getElementById("game-max").value);
+// ─── ADMIN ───────────────────────────────────────
+
+async function loadAdmin() {
+  const el = document.getElementById("admin-content");
+  if (!state.isAdmin) {
+    el.innerHTML = `<div class="empty-state"><p>Нет доступа.</p></div>`;
+    return;
+  }
+
+  const playersData = await api("/players");
+  const players = playersData.players;
+
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-title">Создать игру</div>
+      <div style="height:12px"></div>
+      <div class="form-group">
+        <label class="form-label">Дата</label>
+        <input class="form-input" type="date" id="game-date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Время</label>
+        <input class="form-input" type="time" id="game-time" value="19:00">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Место</label>
+        <input class="form-input" id="game-location" placeholder="Поле на Манаса">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Мест</label>
+        <input class="form-input" type="number" id="game-max" value="20" min="4" max="40">
+      </div>
+      <button class="btn btn-primary" onclick="doCreateGame()">Создать игру</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Распределить составы</div>
+      <div style="height:12px"></div>
+      <button class="btn btn-primary" onclick="doDistribute()">⚙️ Авто-распределение</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Закрыть запись</div>
+      <div style="height:12px"></div>
+      <button class="btn btn-danger" onclick="doCloseGame()">Закрыть текущую игру</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Рейтинги игроков</div>
+      <div style="height:12px"></div>
+      <div id="admin-ratings">
+        ${players.map(p => `
+          <div class="player-row">
+            <div class="player-info">
+              <div class="player-name">${playerName(p)}</div>
+            </div>
+            <div class="rating-edit">
+              <input type="range" min="1" max="10" step="0.5" value="${p.rating}"
+                     oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(1)"
+                     onchange="doSetRating(${p.id}, this.value)">
+              <span class="rating-value">${p.rating.toFixed(1)}</span>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
+async function doCreateGame() {
+  const date = document.getElementById("game-date").value;
+  const time = document.getElementById("game-time").value;
+  const location = document.getElementById("game-location").value;
+  const max = parseInt(document.getElementById("game-max").value);
   if (!date || !location) { toast("Заполните дату и место"); return; }
-  api("/game", "POST", {date:date, time:time, location:location, max_players:max})
-    .then(function() { toast("✅ Игра создана!"); loadHome(); })
-    .catch(function(e) { toast("❌ " + e.message); });
-}
-function doDistribute() {
-  api("/distribute", "POST").then(function() { toast("✅ Составы готовы!"); showScreen("teams"); }).catch(function(e) { toast("❌ " + e.message); });
-}
-function doCloseGame() {
-  api("/game/close", "POST").then(function() { toast("✅ Запись закрыта"); loadHome(); }).catch(function(e) { toast("❌ " + e.message); });
-}
-function doSetRating(playerId, value) {
-  api("/rating", "POST", {player_id: playerId, rating: parseFloat(value)}).catch(function(e) { toast("❌ " + e.message); });
+  try {
+    await api("/game", "POST", { date, time, location, max_players: max });
+    toast("✅ Игра создана!");
+    loadHome();
+  } catch (e) { toast("❌ " + e.message); }
 }
 
-window.onerror = function(msg, url, line, col, err) {
-  document.getElementById("home-content").innerHTML =
-    '<div class="empty-state"><p>' + msg + '<br>Line: ' + line + '<br>' + (err ? err.stack : '') + '</p></div>';
-};
+async function doDistribute() {
+  try {
+    const res = await api("/distribute", "POST");
+    toast(`✅ Составы готовы! (${Object.keys(res.teams).length} команд)`);
+    showScreen("teams");
+  } catch (e) { toast("❌ " + e.message); }
+}
 
-window.addEventListener('unhandledrejection', function(e) {
-  document.getElementById("home-content").innerHTML =
-    '<div class="empty-state"><p>Promise error:<br>' + e.reason + '</p></div>';
-});
+async function doCloseGame() {
+  try {
+    await api("/game/close", "POST");
+    toast("✅ Запись закрыта");
+    loadHome();
+  } catch (e) { toast("❌ " + e.message); }
+}
 
-window.onerror = function(msg, url, line) {
-  document.body.innerHTML = '<pre style="color:red;padding:20px">' + msg + '\nLine: ' + line + '</pre>';
-};
-window.addEventListener('unhandledrejection', function(e) {
-  document.body.innerHTML = '<pre style="color:red;padding:20px">Promise: ' + e.reason + '</pre>';
-});
+async function doSetRating(playerId, value) {
+  try {
+    await api("/rating", "POST", { player_id: playerId, rating: parseFloat(value) });
+  } catch (e) { toast("❌ " + e.message); }
+}
+
+// ─── Init ────────────────────────────────────────
 loadHome();
 </script>
 </body>
