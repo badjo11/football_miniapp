@@ -14,6 +14,15 @@ import database as db
 from auth import verify_init_data
 from distribute import distribute, optimize_preferences, team_summary
 
+# ─── Telegram Bot (встроенный) ───────────────────────────────────
+import threading
+from telegram import Update, WebAppInfo, KeyboardButton, ReplyKeyboardMarkup
+from telegram.ext import Application, CommandHandler
+import hashlib
+import hmac
+import time as _time
+from urllib.parse import urlencode
+
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 
 app = FastAPI(title="Football Mini App")
@@ -303,3 +312,51 @@ async def startup():
     if not BOT_TOKEN:
         print("⚠️  BOT_TOKEN не задан — работаем в dev-режиме без проверки авторизации")
     print("✅ Football Mini App запущен")
+
+
+def make_signed_url(user):
+    ts = str(int(_time.time()))
+    data = f"{user.id}:{ts}"
+    sig = hmac.new(BOT_TOKEN.encode(), data.encode(), hashlib.sha256).hexdigest()[:32]
+    params = urlencode({
+        "uid": user.id,
+        "un": user.username or "",
+        "fn": user.first_name or "",
+        "ln": user.last_name or "",
+        "ts": ts,
+        "sig": sig,
+    })
+    webapp_url = os.environ.get("WEBAPP_URL", "")
+    return f"{webapp_url}?{params}"
+
+
+async def tg_start(update: Update, context):
+    user = update.effective_user
+    url = make_signed_url(user)
+    keyboard = ReplyKeyboardMarkup(
+        [[KeyboardButton(
+            text="⚽ Открыть Football App",
+            web_app=WebAppInfo(url=url),
+        )]],
+        resize_keyboard=True,
+    )
+    await update.message.reply_text(
+        "👋 Привет! Нажми кнопку ниже ⚽",
+        reply_markup=keyboard,
+    )
+
+
+def run_bot():
+    if not BOT_TOKEN:
+        print("⚠️  BOT_TOKEN не задан — бот не запущен")
+        return
+    bot_app = Application.builder().token(BOT_TOKEN).build()
+    bot_app.add_handler(CommandHandler("start", tg_start))
+    print("🤖 Telegram-бот запущен")
+    bot_app.run_polling(drop_pending_updates=True)
+
+
+@app.on_event("startup")
+async def start_bot():
+    thread = threading.Thread(target=run_bot, daemon=True)
+    thread.start()
