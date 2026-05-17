@@ -283,21 +283,32 @@ let state = {
 
 // ─── API ─────────────────────────────────────────
 
-async function api(path, method = "GET", body = null) {
-  const opts = {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      "X-Telegram-Init-Data": initData,
-    },
-  };
-  if (body) opts.body = JSON.stringify(body);
-  const res = await fetch(`/api${path}`, opts);
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || `Error ${res.status}`);
+function api(path, method, body) {
+  method = method || "GET";
+  var authQuery = "";
+  if (urlUser) {
+    authQuery = (path.indexOf("?") >= 0 ? "&" : "?") +
+      "uid=" + urlUser.uid +
+      "&un=" + encodeURIComponent(urlUser.un) +
+      "&fn=" + encodeURIComponent(urlUser.fn) +
+      "&ln=" + encodeURIComponent(urlUser.ln) +
+      "&ts=" + urlUser.ts +
+      "&sig=" + urlUser.sig;
   }
-  return res.json();
+  var h = { "Content-Type": "application/json" };
+  if (initData) h["X-Telegram-Init-Data"] = initData;
+  var opts = { method: method, headers: h };
+  if (body) opts.body = JSON.stringify(body);
+  return fetch("/api" + path + authQuery, opts).then(function(res) {
+    if (!res.ok) {
+      return res.text().then(function(t) {
+        var detail = "Error " + res.status;
+        try { detail = JSON.parse(t).detail || detail; } catch(e) {}
+        throw new Error(detail);
+      });
+    }
+    return res.json();
+  });
 }
 
 // ─── Navigation ──────────────────────────────────

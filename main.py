@@ -42,14 +42,12 @@ async def get_current_player(request: Request) -> dict:
                 last_name=user_data.get("last_name", ""),
             )
 
-    # 2. Подписанный URL от бота
-    user_header = request.headers.get("X-Telegram-User", "")
-    if user_header and BOT_TOKEN:
+    # 2. Подписанный URL (через query params)
+    uid = request.query_params.get("uid", "")
+    ts = request.query_params.get("ts", "")
+    sig = request.query_params.get("sig", "")
+    if uid and ts and sig and BOT_TOKEN:
         try:
-            u = json.loads(user_header)
-            uid = str(u.get("uid", ""))
-            ts = str(u.get("ts", ""))
-            sig = str(u.get("sig", ""))
             expected = hmac.new(
                 BOT_TOKEN.encode(), (uid + ":" + ts).encode(), hashlib.sha256
             ).hexdigest()[:32]
@@ -57,13 +55,12 @@ async def get_current_player(request: Request) -> dict:
                 if abs(_time.time() - int(ts)) < 86400:
                     return db.get_or_create_player(
                         telegram_id=int(uid),
-                        username=str(u.get("un", "")),
-                        first_name=str(u.get("fn", "")),
-                        last_name=str(u.get("ln", "")),
+                        username=request.query_params.get("un", ""),
+                        first_name=request.query_params.get("fn", ""),
+                        last_name=request.query_params.get("ln", ""),
                     )
-        except (json.JSONDecodeError, ValueError, KeyError):
+        except (ValueError, KeyError):
             pass
-
     # 3. Dev-мод
     if not BOT_TOKEN:
         return db.get_or_create_player(999999, "dev_user", "Dev", "User")
