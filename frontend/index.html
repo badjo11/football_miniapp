@@ -641,6 +641,12 @@ async function loadAdmin() {
       <div class="card-title">Распределить составы</div>
       <div style="height:12px"></div>
       <button class="btn btn-primary" onclick="doDistribute()">⚙️ Авто-распределение</button>
+      '<div class="card"><div class="card-title">Добавить гостя</div><div style="height:12px"></div>'+
+      '<div class="form-group"><label class="form-label">Имя</label><input class="form-input" id="guest-name" placeholder="Например: Азамат"></div>'+
+      '<div class="form-group"><label class="form-label">Рейтинг</label>'+
+      '<div class="rating-edit"><input type="range" min="1" max="10" step="0.5" value="5" id="guest-rating" oninput="document.getElementById(\'guest-rating-val\').textContent=parseFloat(this.value).toFixed(1)">'+
+      '<span class="rating-value" id="guest-rating-val">5.0</span></div></div>'+
+      '<button class="btn btn-primary" onclick="doAddGuest()">Добавить на игру</button></div>'+
     </div>
 
     <div class="card">
@@ -707,6 +713,16 @@ async function doSetRating(playerId, value) {
 }
 
 // ─── Init ────────────────────────────────────────
+function doAddGuest() {
+  var name = document.getElementById("guest-name").value;
+  var rating = parseFloat(document.getElementById("guest-rating").value);
+  if (!name) { toast("Введите имя"); return; }
+  api("/guest", "POST", {name: name, rating: rating}).then(function() {
+    toast("✅ " + name + " добавлен!");
+    document.getElementById("guest-name").value = "";
+    loadAdmin();
+  }).catch(function(e) { toast("❌ " + e.message); });
+}
 loadHome();
 </script>
 </body>

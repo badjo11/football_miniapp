@@ -237,6 +237,34 @@ async def make_admin_secret(secret: str, player: dict = Depends(get_current_play
         raise HTTPException(status_code=404)
     db.set_admin(player["id"], True)
     return {"status": "admin granted", "player": player["username"]}
+
+class GuestAdd(BaseModel):
+    name: str
+    rating: float = 5.0
+
+@app.post("/api/guest")
+async def add_guest(data: GuestAdd, admin: dict = Depends(require_admin)):
+    """Добавить гостевого игрока на текущую игру."""
+    game = db.get_active_game()
+    if not game:
+        raise HTTPException(status_code=404, detail="No active game")
+    count = db.count_registrations(game["id"])
+    if count >= game["max_players"]:
+        raise HTTPException(status_code=400, detail="Game is full")
+    if not 1.0 <= data.rating <= 10.0:
+        raise HTTPException(status_code=400, detail="Rating 1.0-10.0")
+    # Создаём гостя с уникальным отрицательным telegram_id
+    import random
+    fake_tg_id = -random.randint(100000, 9999999)
+    player = db.get_or_create_player(
+        telegram_id=fake_tg_id,
+        username="",
+        first_name=data.name,
+        last_name="(гость)",
+    )
+    db.set_player_rating(player["id"], data.rating)
+    db.register_player(game["id"], player["id"])
+    return {"status": "added", "player": player}
 # ─── Frontend ────────────────────────────────────────────────────
 
 @app.get("/")
