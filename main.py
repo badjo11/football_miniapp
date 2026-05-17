@@ -29,7 +29,8 @@ app = FastAPI(title="Football Mini App")
 
 async def get_current_player(request: Request) -> dict:
     init_data = request.headers.get("X-Telegram-Init-Data", "")
-
+    user_header = request.headers.get("X-Telegram-User", "")
+    print(f"[AUTH] initData: {'есть' if init_data else 'нет'} | X-Telegram-User: {user_header[:80] if user_header else 'нет'}")
     # 1. Стандартная Telegram WebApp верификация
     if init_data and BOT_TOKEN:
         user_data = verify_init_data(init_data, BOT_TOKEN)
