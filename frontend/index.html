@@ -282,18 +282,18 @@ let state = {
 };
 
 // ─── API ─────────────────────────────────────────
-
 function api(path, method, body) {
   method = method || "GET";
+  var params = new URLSearchParams(window.location.search);
   var authQuery = "";
-  if (urlUser) {
+  if (params.get("uid")) {
     authQuery = (path.indexOf("?") >= 0 ? "&" : "?") +
-      "uid=" + urlUser.uid +
-      "&un=" + encodeURIComponent(urlUser.un) +
-      "&fn=" + encodeURIComponent(urlUser.fn) +
-      "&ln=" + encodeURIComponent(urlUser.ln) +
-      "&ts=" + urlUser.ts +
-      "&sig=" + urlUser.sig;
+      "uid=" + params.get("uid") +
+      "&un=" + encodeURIComponent(params.get("un") || "") +
+      "&fn=" + encodeURIComponent(params.get("fn") || "") +
+      "&ln=" + encodeURIComponent(params.get("ln") || "") +
+      "&ts=" + params.get("ts") +
+      "&sig=" + params.get("sig");
   }
   var h = { "Content-Type": "application/json" };
   if (initData) h["X-Telegram-Init-Data"] = initData;
