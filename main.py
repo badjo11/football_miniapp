@@ -278,11 +278,19 @@ def run_bot():
         return
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    bot_app = Application.builder().token(BOT_TOKEN).build()
-    bot_app.add_handler(CommandHandler("start", tg_start))
-    print("🤖 Telegram-бот запущен")
-    bot_app.run_polling(drop_pending_updates=True)
 
+    async def _run():
+        bot_app = Application.builder().token(BOT_TOKEN).build()
+        bot_app.add_handler(CommandHandler("start", tg_start))
+        await bot_app.initialize()
+        await bot_app.start()
+        await bot_app.updater.start_polling(drop_pending_updates=True)
+        print("🤖 Telegram-бот запущен")
+        # Держим бота живым
+        while True:
+            await asyncio.sleep(3600)
+
+    loop.run_until_complete(_run())
 
 # ─── Startup ─────────────────────────────────────────────────────
 
