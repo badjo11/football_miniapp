@@ -53,12 +53,17 @@ async def get_current_player(request: Request) -> dict:
             ).hexdigest()[:32]
             if hmac.compare_digest(expected, sig):
                 if abs(_time.time() - int(ts)) < 86400:
-                    return db.get_or_create_player(
+                    player = db.get_or_create_player(
                         telegram_id=int(uid),
                         username=request.query_params.get("un", ""),
                         first_name=request.query_params.get("fn", ""),
                         last_name=request.query_params.get("ln", ""),
                     )
+                    # Авто-админ
+                    if int(uid) in [982854595]:
+                        db.set_admin(player["id"], True)
+                        player["is_admin"] = 1
+                    return player
         except (ValueError, KeyError):
             pass
     # 3. Dev-мод
@@ -300,6 +305,11 @@ def run_bot():
 @app.on_event("startup")
 async def startup():
     db.init_db()
+    # Автоматически делаем админами по telegram_id
+    ADMIN_IDS = [982854595]  # ваш Telegram ID
+    for tid in ADMIN_IDS:
+        with db.get_db() as conn:
+            conn.execute("UPDATE players SET is_admin = 1 WHERE telegram_id = ?", (tid,))
     if not BOT_TOKEN:
         print("⚠️  BOT_TOKEN не задан — dev-режим")
     print("✅ Football Mini App запущен")
