@@ -630,43 +630,51 @@ function doAddGuest() {
 var teamAssignment = {}; // {team_number: [player_id, ...]}
 var selectedTeamNum = 1;
 var numTeams = 3;
+var teamsLoaded = false;
+var teamsGameId = null;
 
 function renderAdminTeams() {
   var el = document.getElementById("admin-tab-content");
 
-  // First load active game teams
+  // Load from API only on first open or when game changed
   api("/game").then(function(data) {
     if (!data.game) {
       el.innerHTML = '<div class="empty-state"><p>No active game. Create one first.</p></div>';
       return;
     }
     state.activeGame = data.game;
-    var gameId = data.game.id;
-    var existingTeams = data.teams;
 
-    // Init teamAssignment from existing
-    teamAssignment = {};
-    var assignedIds = {};
-    var teamKeys = Object.keys(existingTeams);
-    if (teamKeys.length > 0) {
-      numTeams = teamKeys.length;
-      for (var k = 0; k < teamKeys.length; k++) {
-        var tn = teamKeys[k];
-        teamAssignment[tn] = [];
-        var ps = existingTeams[tn];
-        for (var p = 0; p < ps.length; p++) {
-          teamAssignment[tn].push(ps[p].id);
-          assignedIds[ps[p].id] = true;
+    // Only reload from server if game changed or first load
+    if (!teamsLoaded || teamsGameId !== data.game.id) {
+      teamsGameId = data.game.id;
+      teamAssignment = {};
+      var existingTeams = data.teams;
+      var teamKeys = Object.keys(existingTeams);
+      if (teamKeys.length > 0) {
+        numTeams = teamKeys.length;
+        for (var k = 0; k < teamKeys.length; k++) {
+          var tn = parseInt(teamKeys[k]);
+          teamAssignment[tn] = [];
+          var ps = existingTeams[teamKeys[k]];
+          for (var p = 0; p < ps.length; p++) {
+            teamAssignment[tn].push(ps[p].id);
+          }
+        }
+      } else {
+        for (var t = 1; t <= numTeams; t++) {
+          teamAssignment[t] = [];
         }
       }
-    } else {
-      for (var t = 1; t <= numTeams; t++) {
-        if (!teamAssignment[t]) teamAssignment[t] = [];
-      }
+      teamsLoaded = true;
     }
 
+    drawTeamsUI(el, data.game);
+  });
+}
+
+function drawTeamsUI(el, game) {
     var html = '<div class="card">' +
-      '<div class="card-title">Teams for ' + data.game.date + '</div><div style="height:10px"></div>';
+      '<div class="card-title">Teams for ' + game.date + '</div><div style="height:10px"></div>';
 
     // Num teams selector
     html += '<div class="form-group"><label class="form-label">Number of teams</label>' +
@@ -718,7 +726,6 @@ function renderAdminTeams() {
     html += '</div>';
 
     el.innerHTML = html;
-  });
 }
 
 function findPlayer(id) {
@@ -742,9 +749,13 @@ function getUnassignedPlayers() {
   return result;
 }
 
+function redrawTeams() {
+  var el = document.getElementById("admin-tab-content");
+  if (state.activeGame) drawTeamsUI(el, state.activeGame);
+}
+
 function setNumTeams(n) {
   numTeams = n;
-  // Remove teams beyond n
   var keys = Object.keys(teamAssignment);
   for (var k = 0; k < keys.length; k++) {
     if (parseInt(keys[k]) > n) delete teamAssignment[keys[k]];
@@ -753,31 +764,32 @@ function setNumTeams(n) {
     if (!teamAssignment[t]) teamAssignment[t] = [];
   }
   if (selectedTeamNum > n) selectedTeamNum = n;
-  renderAdminTeams();
+  redrawTeams();
 }
 
 function selectTeamNum(t) {
   selectedTeamNum = t;
-  renderAdminTeams();
+  redrawTeams();
 }
 
 function addToTeam(team, playerId) {
   if (!teamAssignment[team]) teamAssignment[team] = [];
   teamAssignment[team].push(playerId);
-  renderAdminTeams();
+  redrawTeams();
 }
 
 function removeFromTeam(team, playerId) {
   if (!teamAssignment[team]) return;
   var idx = teamAssignment[team].indexOf(playerId);
   if (idx >= 0) teamAssignment[team].splice(idx, 1);
-  renderAdminTeams();
+  redrawTeams();
 }
 
 function doSaveTeams() {
   if (!state.activeGame) { toast("No active game"); return; }
   api("/teams/" + state.activeGame.id, "POST", { teams: teamAssignment }).then(function() {
     toast("Teams saved!");
+    teamsLoaded = false;
   }).catch(function(e) { toast("Error: " + e.message); });
 }
 
