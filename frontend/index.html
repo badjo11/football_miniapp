@@ -272,7 +272,8 @@ var state = {
   isAdmin: false,
   allPlayers: [],
   activeGame: null,
-  adminTab: "game"
+  adminTab: "game",
+  statsTab: "results"
 };
 
 // --- API ---
@@ -389,6 +390,8 @@ function getTeamNameFromIds(teamNum) {
 }
 
 // --- STATS ---
+var cachedStats = null;
+
 function loadStats() {
   var el = document.getElementById("stats-content");
   api("/me").then(function(data) {
@@ -397,37 +400,99 @@ function loadStats() {
     if (state.isAdmin) document.getElementById("nav-admin").style.display = "";
     return api("/stats");
   }).then(function(data) {
-    var stats = data.stats;
-    if (!stats || stats.length === 0) {
-      el.innerHTML = '<div class="empty-state"><div class="icon">&#9917;</div><p>No players yet.</p></div>';
-      return;
-    }
-    var html = '<div class="card" style="padding:10px;overflow-x:auto">' +
-      '<table class="stats-table"><thead><tr>' +
-      '<th>Player</th><th class="num">Rtg</th><th class="num">M</th>' +
-      '<th class="num">W</th><th class="num">D</th><th class="num">L</th>' +
-      '<th class="num">G</th><th class="num">A</th></tr></thead><tbody>';
+    cachedStats = data.stats;
+    renderStatsView(el);
+  }).catch(function(e) {
+    el.innerHTML = '<div class="empty-state"><p>' + e.message + '</p></div>';
+  });
+}
 
-    for (var i = 0; i < stats.length; i++) {
-      var s = stats[i];
+function switchStatsTab(tab) {
+  state.statsTab = tab;
+  var el = document.getElementById("stats-content");
+  renderStatsView(el);
+}
+
+function renderStatsView(el) {
+  var stats = cachedStats;
+  if (!stats || stats.length === 0) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">&#9917;</div><p>No players yet.</p></div>';
+    return;
+  }
+  var tab = state.statsTab;
+  var html = '<div class="tab-bar" style="margin-bottom:12px">' +
+    '<button class="tab-btn ' + (tab === "results" ? "active" : "") + '" onclick="switchStatsTab(\'results\')">Results</button>' +
+    '<button class="tab-btn ' + (tab === "goals" ? "active" : "") + '" onclick="switchStatsTab(\'goals\')">Goals</button>' +
+    '</div>';
+
+  if (tab === "results") {
+    // Sort by points desc, then win% desc
+    var sorted = stats.slice().sort(function(a, b) {
+      var ptsA = a.wins * 3 + a.draws;
+      var ptsB = b.wins * 3 + b.draws;
+      if (ptsB !== ptsA) return ptsB - ptsA;
+      var wpA = a.matches > 0 ? a.wins / a.matches : 0;
+      var wpB = b.matches > 0 ? b.wins / b.matches : 0;
+      return wpB - wpA;
+    });
+
+    html += '<div class="card" style="padding:10px;overflow-x:auto">' +
+      '<table class="stats-table"><thead><tr>' +
+      '<th>Player</th><th class="num">M</th>' +
+      '<th class="num">W</th><th class="num">D</th><th class="num">L</th>' +
+      '<th class="num">W%</th><th class="num">Pts</th></tr></thead><tbody>';
+
+    for (var i = 0; i < sorted.length; i++) {
+      var s = sorted[i];
       var name = playerName(s);
       var color = avatarColor(name);
+      var pts = s.wins * 3 + s.draws;
+      var winPct = s.matches > 0 ? Math.round((s.wins / s.matches) * 100) : 0;
+
       html += '<tr>' +
         '<td style="white-space:nowrap"><span class="player-avatar" style="width:26px;height:26px;font-size:10px;display:inline-flex;vertical-align:middle;background:' + color + '22;color:' + color + '">' + initials(s) + '</span> ' + name + '</td>' +
-        '<td class="num">' + s.rating.toFixed(1) + '</td>' +
         '<td class="num">' + s.matches + '</td>' +
         '<td class="num stat-w">' + s.wins + '</td>' +
         '<td class="num stat-d">' + s.draws + '</td>' +
         '<td class="num stat-l">' + s.losses + '</td>' +
-        '<td class="num">' + s.goals + '</td>' +
-        '<td class="num">' + s.assists + '</td>' +
+        '<td class="num">' + winPct + '%</td>' +
+        '<td class="num" style="font-weight:700">' + pts + '</td>' +
         '</tr>';
     }
     html += '</tbody></table></div>';
-    el.innerHTML = html;
-  }).catch(function(e) {
-    el.innerHTML = '<div class="empty-state"><p>' + e.message + '</p></div>';
-  });
+  } else {
+    // Goals tab - sorted by G+A desc
+    var sorted = stats.slice().sort(function(a, b) {
+      var gaA = a.goals + a.assists;
+      var gaB = b.goals + b.assists;
+      return gaB - gaA;
+    });
+
+    html += '<div class="card" style="padding:10px;overflow-x:auto">' +
+      '<table class="stats-table"><thead><tr>' +
+      '<th>Player</th>' +
+      '<th class="num">G</th><th class="num">A</th><th class="num">G+A</th>' +
+      '<th class="num">Avg</th></tr></thead><tbody>';
+
+    for (var i = 0; i < sorted.length; i++) {
+      var s = sorted[i];
+      var name = playerName(s);
+      var color = avatarColor(name);
+      var ga = s.goals + s.assists;
+      var avg = s.matches > 0 ? (ga / s.matches).toFixed(1) : "0.0";
+
+      html += '<tr>' +
+        '<td style="white-space:nowrap"><span class="player-avatar" style="width:26px;height:26px;font-size:10px;display:inline-flex;vertical-align:middle;background:' + color + '22;color:' + color + '">' + initials(s) + '</span> ' + name + '</td>' +
+        '<td class="num">' + s.goals + '</td>' +
+        '<td class="num">' + s.assists + '</td>' +
+        '<td class="num" style="font-weight:700">' + ga + '</td>' +
+        '<td class="num">' + avg + '</td>' +
+        '</tr>';
+    }
+    html += '</tbody></table></div>';
+  }
+
+  el.innerHTML = html;
 }
 
 // --- GAMES ---
@@ -444,18 +509,27 @@ function loadGames() {
       var g = games[i];
       var statusCls = g.status === "active" ? "active" : "closed";
       var statusText = g.status === "active" ? "Active" : "Closed";
-      html += '<div class="game-item" onclick="openGameDetail(' + g.id + ')">' +
+      html += '<div class="game-item" style="position:relative">' +
+        '<div onclick="openGameDetail(' + g.id + ')" style="cursor:pointer">' +
         '<div class="game-item-header">' +
         '<div class="game-item-date">' + g.date + '</div>' +
-        '<span class="game-status ' + statusCls + '">' + statusText + '</span>' +
-        '</div>' +
+        '<div style="display:flex;align-items:center;gap:6px"><span class="game-status ' + statusCls + '">' + statusText + '</span>' +
+        (state.isAdmin ? '<button class="del-btn" onclick="event.stopPropagation();doDeleteGame(' + g.id + ')" style="font-size:16px">x</button>' : '') +
+        '</div></div>' +
         '<div class="game-item-meta">' + g.time + ' &middot; ' + g.location + '</div>' +
-        '</div>';
+        '</div></div>';
     }
     el.innerHTML = html;
   }).catch(function(e) {
     el.innerHTML = '<div class="empty-state"><p>' + e.message + '</p></div>';
   });
+}
+
+function doDeleteGame(gameId) {
+  if (!confirm("Delete game and all its stats?")) return;
+  api("/game/" + gameId, "DELETE").then(function() {
+    loadGames();
+  }).catch(function(e) {});
 }
 
 function openGameDetail(gameId) {
