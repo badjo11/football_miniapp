@@ -10,7 +10,7 @@ Telegram подписывает данные пользователя токен
 import hashlib
 import hmac
 import json
-import time
+import time 
 from urllib.parse import parse_qs
 
 # Время жизни initData (секунд). После этого считаем данные устаревшими.

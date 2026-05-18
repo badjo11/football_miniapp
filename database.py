@@ -1,6 +1,5 @@
 import sqlite3
 from contextlib import contextmanager
-from datetime import datetime
 
 DB_PATH = "football.db"
 
@@ -10,6 +9,7 @@ def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA foreign_keys=ON")
     try:
         yield conn
         conn.commit()
@@ -36,27 +36,8 @@ def init_db():
                 date        TEXT NOT NULL,
                 time        TEXT NOT NULL,
                 location    TEXT NOT NULL,
-                max_players INTEGER DEFAULT 20,
-                status      TEXT DEFAULT 'open',
+                status      TEXT DEFAULT 'active',
                 created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
-            );
-
-            CREATE TABLE IF NOT EXISTS registrations (
-                id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                game_id     INTEGER NOT NULL,
-                player_id   INTEGER NOT NULL,
-                created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE(game_id, player_id),
-                FOREIGN KEY (game_id) REFERENCES games(id),
-                FOREIGN KEY (player_id) REFERENCES players(id)
-            );
-
-            CREATE TABLE IF NOT EXISTS preferences (
-                player_id   INTEGER NOT NULL,
-                partner_id  INTEGER NOT NULL,
-                PRIMARY KEY (player_id, partner_id),
-                FOREIGN KEY (player_id) REFERENCES players(id),
-                FOREIGN KEY (partner_id) REFERENCES players(id)
             );
 
             CREATE TABLE IF NOT EXISTS teams (
@@ -67,10 +48,31 @@ def init_db():
                 FOREIGN KEY (game_id) REFERENCES games(id),
                 FOREIGN KEY (player_id) REFERENCES players(id)
             );
+
+            CREATE TABLE IF NOT EXISTS matches (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                game_id     INTEGER NOT NULL,
+                team_a      INTEGER NOT NULL,
+                team_b      INTEGER NOT NULL,
+                result      TEXT DEFAULT NULL,
+                created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (game_id) REFERENCES games(id)
+            );
+
+            CREATE TABLE IF NOT EXISTS goals (
+                id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                match_id        INTEGER NOT NULL,
+                player_id       INTEGER NOT NULL,
+                assist_player_id INTEGER DEFAULT NULL,
+                created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (match_id) REFERENCES matches(id),
+                FOREIGN KEY (player_id) REFERENCES players(id),
+                FOREIGN KEY (assist_player_id) REFERENCES players(id)
+            );
         """)
 
 
-# ─── Players ─────────────────────────────────────────────────────
+# --- Players ---
 
 def get_or_create_player(telegram_id: int, username: str = "",
                          first_name: str = "", last_name: str = "") -> dict:
@@ -79,7 +81,6 @@ def get_or_create_player(telegram_id: int, username: str = "",
             "SELECT * FROM players WHERE telegram_id = ?", (telegram_id,)
         ).fetchone()
         if row:
-            # Обновляем имя/username если изменились
             db.execute(
                 "UPDATE players SET username=?, first_name=?, last_name=? WHERE telegram_id=?",
                 (username, first_name, last_name, telegram_id),
@@ -126,13 +127,13 @@ def is_admin(player_id: int) -> bool:
         return bool(row["is_admin"]) if row else False
 
 
-# ─── Games ───────────────────────────────────────────────────────
+# --- Games ---
 
-def create_game(date: str, time: str, location: str, max_players: int) -> int:
+def create_game(date: str, time: str, location: str) -> int:
     with get_db() as db:
         cur = db.execute(
-            "INSERT INTO games (date, time, location, max_players) VALUES (?,?,?,?)",
-            (date, time, location, max_players),
+            "INSERT INTO games (date, time, location) VALUES (?,?,?)",
+            (date, time, location),
         )
         return cur.lastrowid
 
@@ -140,15 +141,21 @@ def create_game(date: str, time: str, location: str, max_players: int) -> int:
 def get_active_game() -> dict | None:
     with get_db() as db:
         row = db.execute(
-            "SELECT * FROM games WHERE status='open' ORDER BY id DESC LIMIT 1"
+            "SELECT * FROM games WHERE status='active' ORDER BY id DESC LIMIT 1"
         ).fetchone()
         return dict(row) if row else None
 
 
 def get_all_games() -> list[dict]:
     with get_db() as db:
-        rows = db.execute("SELECT * FROM games ORDER BY id DESC LIMIT 20").fetchall()
+        rows = db.execute("SELECT * FROM games ORDER BY id DESC").fetchall()
         return [dict(r) for r in rows]
+
+
+def get_game_by_id(game_id: int) -> dict | None:
+    with get_db() as db:
+        row = db.execute("SELECT * FROM games WHERE id = ?", (game_id,)).fetchone()
+        return dict(row) if row else None
 
 
 def close_game(game_id: int):
@@ -156,102 +163,25 @@ def close_game(game_id: int):
         db.execute("UPDATE games SET status='closed' WHERE id=?", (game_id,))
 
 
-# ─── Registrations ──────────────────────────────────────────────
-
-def register_player(game_id: int, player_id: int) -> bool:
+def delete_game(game_id: int):
     with get_db() as db:
-        existing = db.execute(
-            "SELECT id FROM registrations WHERE game_id=? AND player_id=?",
-            (game_id, player_id),
-        ).fetchone()
-        if existing:
-            return False
-        db.execute(
-            "INSERT INTO registrations (game_id, player_id) VALUES (?,?)",
-            (game_id, player_id),
-        )
-        return True
+        db.execute("DELETE FROM goals WHERE match_id IN (SELECT id FROM matches WHERE game_id=?)", (game_id,))
+        db.execute("DELETE FROM matches WHERE game_id=?", (game_id,))
+        db.execute("DELETE FROM teams WHERE game_id=?", (game_id,))
+        db.execute("DELETE FROM games WHERE id=?", (game_id,))
 
 
-def unregister_player(game_id: int, player_id: int) -> bool:
-    with get_db() as db:
-        cur = db.execute(
-            "DELETE FROM registrations WHERE game_id=? AND player_id=?",
-            (game_id, player_id),
-        )
-        return cur.rowcount > 0
+# --- Teams ---
 
-
-def get_registered_players(game_id: int) -> list[dict]:
-    with get_db() as db:
-        rows = db.execute(
-            """SELECT p.* FROM players p
-               JOIN registrations r ON r.player_id = p.id
-               WHERE r.game_id = ?
-               ORDER BY p.rating DESC""",
-            (game_id,),
-        ).fetchall()
-        return [dict(r) for r in rows]
-
-
-def is_registered(game_id: int, player_id: int) -> bool:
-    with get_db() as db:
-        row = db.execute(
-            "SELECT id FROM registrations WHERE game_id=? AND player_id=?",
-            (game_id, player_id),
-        ).fetchone()
-        return row is not None
-
-
-def count_registrations(game_id: int) -> int:
-    with get_db() as db:
-        return db.execute(
-            "SELECT COUNT(*) FROM registrations WHERE game_id=?", (game_id,)
-        ).fetchone()[0]
-
-
-# ─── Preferences ────────────────────────────────────────────────
-
-def set_preference(player_id: int, partner_id: int):
-    with get_db() as db:
-        db.execute(
-            "INSERT OR REPLACE INTO preferences (player_id, partner_id) VALUES (?,?)",
-            (player_id, partner_id),
-        )
-
-
-def get_preference(player_id: int) -> dict | None:
-    with get_db() as db:
-        row = db.execute(
-            """SELECT p.* FROM players p
-               JOIN preferences pr ON pr.partner_id = p.id
-               WHERE pr.player_id = ?""",
-            (player_id,),
-        ).fetchone()
-        return dict(row) if row else None
-
-
-def clear_preference(player_id: int):
-    with get_db() as db:
-        db.execute("DELETE FROM preferences WHERE player_id=?", (player_id,))
-
-
-def get_all_preferences() -> dict[int, int]:
-    with get_db() as db:
-        rows = db.execute("SELECT player_id, partner_id FROM preferences").fetchall()
-        return {r["player_id"]: r["partner_id"] for r in rows}
-
-
-# ─── Teams ──────────────────────────────────────────────────────
-
-def save_teams(game_id: int, teams: list[list[dict]]):
+def save_teams(game_id: int, teams_data: dict):
+    """teams_data: {team_number: [player_id, ...]}"""
     with get_db() as db:
         db.execute("DELETE FROM teams WHERE game_id=?", (game_id,))
-        for team_number, players in enumerate(teams, start=1):
-            for player in players:
+        for team_number, player_ids in teams_data.items():
+            for pid in player_ids:
                 db.execute(
                     "INSERT INTO teams (game_id, team_number, player_id) VALUES (?,?,?)",
-                    (game_id, team_number, player["id"]),
+                    (game_id, int(team_number), pid),
                 )
 
 
@@ -272,24 +202,156 @@ def get_teams(game_id: int) -> dict[int, list[dict]]:
         return result
 
 
-def swap_players(game_id: int, player1_id: int, player2_id: int) -> bool:
+def get_player_team(game_id: int, player_id: int) -> int | None:
     with get_db() as db:
-        t1 = db.execute(
+        row = db.execute(
             "SELECT team_number FROM teams WHERE game_id=? AND player_id=?",
-            (game_id, player1_id),
+            (game_id, player_id),
         ).fetchone()
-        t2 = db.execute(
-            "SELECT team_number FROM teams WHERE game_id=? AND player_id=?",
-            (game_id, player2_id),
-        ).fetchone()
-        if not t1 or not t2 or t1["team_number"] == t2["team_number"]:
-            return False
-        db.execute(
-            "UPDATE teams SET team_number=? WHERE game_id=? AND player_id=?",
-            (t2["team_number"], game_id, player1_id),
+        return row["team_number"] if row else None
+
+
+# --- Matches ---
+
+def create_match(game_id: int, team_a: int, team_b: int, result: str | None = None) -> int:
+    with get_db() as db:
+        cur = db.execute(
+            "INSERT INTO matches (game_id, team_a, team_b, result) VALUES (?,?,?,?)",
+            (game_id, team_a, team_b, result),
         )
-        db.execute(
-            "UPDATE teams SET team_number=? WHERE game_id=? AND player_id=?",
-            (t1["team_number"], game_id, player2_id),
+        return cur.lastrowid
+
+
+def update_match(match_id: int, result: str | None):
+    with get_db() as db:
+        db.execute("UPDATE matches SET result=? WHERE id=?", (result, match_id))
+
+
+def delete_match(match_id: int):
+    with get_db() as db:
+        db.execute("DELETE FROM goals WHERE match_id=?", (match_id,))
+        db.execute("DELETE FROM matches WHERE id=?", (match_id,))
+
+
+def get_matches(game_id: int) -> list[dict]:
+    with get_db() as db:
+        rows = db.execute(
+            "SELECT * FROM matches WHERE game_id=? ORDER BY id",
+            (game_id,),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+def get_match_by_id(match_id: int) -> dict | None:
+    with get_db() as db:
+        row = db.execute("SELECT * FROM matches WHERE id=?", (match_id,)).fetchone()
+        return dict(row) if row else None
+
+
+# --- Goals ---
+
+def add_goal(match_id: int, player_id: int, assist_player_id: int | None = None) -> int:
+    with get_db() as db:
+        cur = db.execute(
+            "INSERT INTO goals (match_id, player_id, assist_player_id) VALUES (?,?,?)",
+            (match_id, player_id, assist_player_id),
         )
-        return True
+        return cur.lastrowid
+
+
+def delete_goal(goal_id: int):
+    with get_db() as db:
+        db.execute("DELETE FROM goals WHERE id=?", (goal_id,))
+
+
+def get_goals(match_id: int) -> list[dict]:
+    with get_db() as db:
+        rows = db.execute(
+            """SELECT g.id, g.match_id, g.player_id, g.assist_player_id,
+                      p.first_name as scorer_first, p.last_name as scorer_last,
+                      a.first_name as assist_first, a.last_name as assist_last
+               FROM goals g
+               JOIN players p ON p.id = g.player_id
+               LEFT JOIN players a ON a.id = g.assist_player_id
+               WHERE g.match_id = ?
+               ORDER BY g.id""",
+            (match_id,),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+def get_game_goals(game_id: int) -> list[dict]:
+    with get_db() as db:
+        rows = db.execute(
+            """SELECT g.id, g.match_id, g.player_id, g.assist_player_id,
+                      p.first_name as scorer_first, p.last_name as scorer_last,
+                      a.first_name as assist_first, a.last_name as assist_last
+               FROM goals g
+               JOIN matches m ON m.id = g.match_id
+               JOIN players p ON p.id = g.player_id
+               LEFT JOIN players a ON a.id = g.assist_player_id
+               WHERE m.game_id = ?
+               ORDER BY g.id""",
+            (game_id,),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+# --- Stats ---
+
+def get_player_stats() -> list[dict]:
+    """
+    Returns aggregated stats for all players:
+    matches, wins, draws, losses, goals, assists
+    """
+    with get_db() as db:
+        # Get all players
+        players = db.execute("SELECT * FROM players ORDER BY rating DESC").fetchall()
+        players = [dict(p) for p in players]
+
+        for p in players:
+            pid = p["id"]
+
+            # Count matches played (player was in a team that played a match with a result)
+            matches_rows = db.execute(
+                """SELECT m.id, m.team_a, m.team_b, m.result, t.team_number
+                   FROM matches m
+                   JOIN teams t ON t.game_id = m.game_id AND t.player_id = ?
+                   WHERE m.result IS NOT NULL
+                     AND (t.team_number = m.team_a OR t.team_number = m.team_b)""",
+                (pid,),
+            ).fetchall()
+
+            wins = 0
+            draws = 0
+            losses = 0
+            for mr in matches_rows:
+                mr = dict(mr)
+                my_team = mr["team_number"]
+                if mr["result"] == "draw":
+                    draws += 1
+                elif mr["result"] == "team_a" and my_team == mr["team_a"]:
+                    wins += 1
+                elif mr["result"] == "team_b" and my_team == mr["team_b"]:
+                    wins += 1
+                else:
+                    losses += 1
+
+            p["matches"] = len(matches_rows)
+            p["wins"] = wins
+            p["draws"] = draws
+            p["losses"] = losses
+
+            # Goals
+            goals_count = db.execute(
+                "SELECT COUNT(*) FROM goals WHERE player_id=?", (pid,)
+            ).fetchone()[0]
+            p["goals"] = goals_count
+
+            # Assists
+            assists_count = db.execute(
+                "SELECT COUNT(*) FROM goals WHERE assist_player_id=?", (pid,)
+            ).fetchone()[0]
+            p["assists"] = assists_count
+
+        return players

@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3:*)",
+      "Bash(where:*)",
+      "Bash(pip --version:*)",
+      "Bash(pip3:*)",
+      "Bash(python.exe:*)"
+    ]
+  }
+}
