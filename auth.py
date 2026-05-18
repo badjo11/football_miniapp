@@ -6,7 +6,7 @@ Telegram подписывает данные пользователя токен
 
 Документация: https://core.telegram.org/bots/webapps#validating-data-received-via-the-mini-app
 """
-
+ 
 import hashlib
 import hmac
 import json
