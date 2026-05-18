@@ -1068,10 +1068,19 @@ function renderAdminRatings() {
       '<div class="rating-edit"><input type="range" min="1" max="10" step="0.5" value="' + p.rating + '" ' +
       'oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(1)" ' +
       'onchange="doSetRating(' + p.id + ', this.value)">' +
-      '<span class="rating-value">' + p.rating.toFixed(1) + '</span></div></div>';
+      '<span class="rating-value">' + p.rating.toFixed(1) + '</span></div>' +
+      '<button class="del-btn" onclick="doDeletePlayer(' + p.id + ',\'' + playerName(p).replace(/'/g, "\\'") + '\')" title="Delete player">x</button></div>';
   }
   html += '</div>';
   el.innerHTML = html;
+}
+
+function doDeletePlayer(playerId, name) {
+  if (!confirm("Delete " + name + " and all their stats?")) return;
+  api("/player/" + playerId, "DELETE").then(function() {
+    state.allPlayers = state.allPlayers.filter(function(p) { return p.id !== playerId; });
+    renderAdminRatings();
+  }).catch(function(e) {});
 }
 
 function doSetRating(playerId, value) {

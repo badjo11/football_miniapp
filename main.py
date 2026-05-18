@@ -251,6 +251,15 @@ async def get_goals(match_id: int, player: dict = Depends(get_current_player)):
 
 # --- Rating & Guest ---
 
+@app.delete("/api/player/{player_id}")
+async def delete_player(player_id: int, admin: dict = Depends(require_admin)):
+    player = db.get_player_by_id(player_id)
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
+    db.delete_player(player_id)
+    return {"status": "deleted"}
+
+
 @app.post("/api/rating")
 async def update_rating(data: RatingUpdate, admin: dict = Depends(require_admin)):
     if not 1.0 <= data.rating <= 10.0:

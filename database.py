@@ -208,6 +208,14 @@ def set_player_rating(player_id: int, rating: float):
         _execute(db, _q("UPDATE players SET rating = ? WHERE id = ?"), (rating, player_id))
 
 
+def delete_player(player_id: int):
+    with get_db() as db:
+        _execute(db, _q("DELETE FROM goals WHERE player_id=?"), (player_id,))
+        _execute(db, _q("UPDATE goals SET assist_player_id=NULL WHERE assist_player_id=?"), (player_id,))
+        _execute(db, _q("DELETE FROM teams WHERE player_id=?"), (player_id,))
+        _execute(db, _q("DELETE FROM players WHERE id=?"), (player_id,))
+
+
 def set_admin(player_id: int, is_admin: bool):
     with get_db() as db:
         _execute(db, _q("UPDATE players SET is_admin = ? WHERE id = ?"), (int(is_admin), player_id))
