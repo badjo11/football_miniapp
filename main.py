@@ -5,6 +5,7 @@ import time as _time
 import asyncio
 import threading
 import random
+from itertools import combinations
 from urllib.parse import urlencode
 
 from fastapi import FastAPI, Request, HTTPException, Depends
@@ -13,8 +14,8 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Optional
 
-from telegram import Update, WebAppInfo, KeyboardButton, ReplyKeyboardMarkup
-from telegram.ext import Application, CommandHandler
+from telegram import Update, WebAppInfo, KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler
 
 import database as db
 from auth import verify_init_data
@@ -326,6 +327,187 @@ async def tg_start(update: Update, context):
     )
 
 
+# --- Match recording bot (inline buttons) ---
+
+def _player_name(p):
+    name = (p.get("first_name") or p.get("username") or "?").strip()
+    return name.split()[0] if name else "?"
+
+
+def _build_scorers_keyboard(match_id, players):
+    buttons = []
+    row = []
+    for p in players:
+        row.append(InlineKeyboardButton(
+            _player_name(p),
+            callback_data=f"goal:{match_id}:{p['id']}"
+        ))
+        if len(row) == 2:
+            buttons.append(row)
+            row = []
+    if row:
+        buttons.append(row)
+    buttons.append([InlineKeyboardButton("Готово ✓", callback_data=f"done:{match_id}")])
+    return InlineKeyboardMarkup(buttons)
+
+
+def _format_goals(goals):
+    if not goals:
+        return "нет"
+    parts = []
+    for g in goals:
+        scorer = (g.get("scorer_first") or "?").split()[0]
+        assist = g.get("assist_first")
+        if assist:
+            parts.append(f"{scorer} (ас. {assist.split()[0]})")
+        else:
+            parts.append(scorer)
+    return ", ".join(parts)
+
+
+async def tg_match(update: Update, context):
+    if not update.message:
+        return
+    game = db.get_active_game()
+    if not game:
+        await update.message.reply_text("Нет активной игры.")
+        return
+    teams = db.get_teams(game["id"])
+    team_nums = sorted(teams.keys())
+    if len(team_nums) < 2:
+        await update.message.reply_text("Команды ещё не набраны.")
+        return
+    buttons = [
+        [InlineKeyboardButton(
+            f"Команда {a} vs Команда {b}",
+            callback_data=f"match:{a}:{b}"
+        )]
+        for a, b in combinations(team_nums, 2)
+    ]
+    await update.message.reply_text(
+        "Выберите пару команд:",
+        reply_markup=InlineKeyboardMarkup(buttons)
+    )
+
+
+async def tg_callback(update: Update, context):
+    query = update.callback_query
+    await query.answer()
+    parts = query.data.split(":")
+
+    try:
+        if parts[0] == "match":
+            team_a, team_b = int(parts[1]), int(parts[2])
+            game = db.get_active_game()
+            if not game:
+                await query.edit_message_text("Нет активной игры.")
+                return
+            match_id = db.create_match(game["id"], team_a, team_b, None)
+            teams = db.get_teams(game["id"])
+            a_str = ", ".join(_player_name(p) for p in teams.get(team_a, []))
+            b_str = ", ".join(_player_name(p) for p in teams.get(team_b, []))
+            buttons = [[
+                InlineKeyboardButton(f"🏆 Команда {team_a}", callback_data=f"result:{match_id}:team_a"),
+                InlineKeyboardButton("🤝 Ничья", callback_data=f"result:{match_id}:draw"),
+                InlineKeyboardButton(f"🏆 Команда {team_b}", callback_data=f"result:{match_id}:team_b"),
+            ]]
+            await query.edit_message_text(
+                f"Команда {team_a}: {a_str}\nКоманда {team_b}: {b_str}\n\nКто победил?",
+                reply_markup=InlineKeyboardMarkup(buttons)
+            )
+
+        elif parts[0] == "result":
+            match_id, winner = int(parts[1]), parts[2]
+            db.update_match(match_id, winner)
+            match = db.get_match_by_id(match_id)
+            teams = db.get_teams(match["game_id"])
+            pa = teams.get(match["team_a"], [])
+            pb = teams.get(match["team_b"], [])
+            result_labels = {
+                "team_a": f"🏆 Команда {match['team_a']}",
+                "team_b": f"🏆 Команда {match['team_b']}",
+                "draw": "🤝 Ничья",
+            }
+            keyboard = _build_scorers_keyboard(match_id, pa + pb)
+            await query.edit_message_text(
+                f"Результат: {result_labels[winner]}\n\nКто забил?",
+                reply_markup=keyboard
+            )
+
+        elif parts[0] == "goal":
+            match_id, player_id = int(parts[1]), int(parts[2])
+            goal_id = db.add_goal(match_id, player_id, None)
+            match = db.get_match_by_id(match_id)
+            teams = db.get_teams(match["game_id"])
+            all_players = teams.get(match["team_a"], []) + teams.get(match["team_b"], [])
+            scorer = next((p for p in all_players if p["id"] == player_id), None)
+            scorer_name = _player_name(scorer) if scorer else "?"
+            buttons = []
+            row = []
+            for p in all_players:
+                if p["id"] == player_id:
+                    continue
+                row.append(InlineKeyboardButton(
+                    _player_name(p),
+                    callback_data=f"assist:{match_id}:{goal_id}:{p['id']}"
+                ))
+                if len(row) == 2:
+                    buttons.append(row)
+                    row = []
+            if row:
+                buttons.append(row)
+            buttons.append([InlineKeyboardButton(
+                "Без ассиста",
+                callback_data=f"assist:{match_id}:{goal_id}:none"
+            )])
+            await query.edit_message_text(
+                f"Гол: {scorer_name}\nАссист?",
+                reply_markup=InlineKeyboardMarkup(buttons)
+            )
+
+        elif parts[0] == "assist":
+            match_id, goal_id = int(parts[1]), int(parts[2])
+            assist_id = None if parts[3] == "none" else int(parts[3])
+            db.update_goal_assist(goal_id, assist_id)
+            match = db.get_match_by_id(match_id)
+            teams = db.get_teams(match["game_id"])
+            all_players = teams.get(match["team_a"], []) + teams.get(match["team_b"], [])
+            goals = db.get_goals(match_id)
+            keyboard = _build_scorers_keyboard(match_id, all_players)
+            await query.edit_message_text(
+                f"Голы: {_format_goals(goals)}\n\nЕщё?",
+                reply_markup=keyboard
+            )
+
+        elif parts[0] == "done":
+            match_id = int(parts[1])
+            match = db.get_match_by_id(match_id)
+            goals = db.get_goals(match_id)
+            teams = db.get_teams(match["game_id"])
+            pa = teams.get(match["team_a"], [])
+            pb = teams.get(match["team_b"], [])
+            result_labels = {
+                "team_a": f"🏆 Команда {match['team_a']}",
+                "team_b": f"🏆 Команда {match['team_b']}",
+                "draw": "🤝 Ничья",
+            }
+            a_str = ", ".join(_player_name(p) for p in pa)
+            b_str = ", ".join(_player_name(p) for p in pb)
+            await query.edit_message_text(
+                f"✅ Матч записан!\n"
+                f"Команда {match['team_a']} ({a_str}) vs Команда {match['team_b']} ({b_str})\n"
+                f"Результат: {result_labels.get(match.get('result'), '—')}\n"
+                f"Голы: {_format_goals(goals)}"
+            )
+
+    except Exception as e:
+        print(f"[bot] callback error: {e}")
+        try:
+            await query.edit_message_text(f"Ошибка: {e}")
+        except Exception:
+            pass
+
+
 def run_bot():
     if not BOT_TOKEN or not WEBAPP_URL:
         print("BOT_TOKEN or WEBAPP_URL not set - bot not started")
@@ -336,6 +518,8 @@ def run_bot():
     async def _run():
         bot_app = Application.builder().token(BOT_TOKEN).build()
         bot_app.add_handler(CommandHandler("start", tg_start))
+        bot_app.add_handler(CommandHandler(["match", "матч"], tg_match))
+        bot_app.add_handler(CallbackQueryHandler(tg_callback))
         await bot_app.initialize()
         await bot_app.start()
         await bot_app.updater.start_polling(drop_pending_updates=True)

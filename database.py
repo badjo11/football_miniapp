@@ -353,6 +353,11 @@ def add_goal(match_id: int, player_id: int, assist_player_id: int | None = None)
             return cur.lastrowid
 
 
+def update_goal_assist(goal_id: int, assist_player_id):
+    with get_db() as db:
+        _execute(db, _q("UPDATE goals SET assist_player_id=? WHERE id=?"), (assist_player_id, goal_id))
+
+
 def delete_goal(goal_id: int):
     with get_db() as db:
         _execute(db, _q("DELETE FROM goals WHERE id=?"), (goal_id,))
