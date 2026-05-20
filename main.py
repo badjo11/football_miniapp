@@ -518,7 +518,7 @@ def run_bot():
     async def _run():
         bot_app = Application.builder().token(BOT_TOKEN).build()
         bot_app.add_handler(CommandHandler("start", tg_start))
-        bot_app.add_handler(CommandHandler(["match", "матч"], tg_match))
+        bot_app.add_handler(CommandHandler("match", tg_match))
         bot_app.add_handler(CallbackQueryHandler(tg_callback))
         await bot_app.initialize()
         await bot_app.start()
